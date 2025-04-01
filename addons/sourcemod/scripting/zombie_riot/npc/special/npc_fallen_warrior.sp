@@ -176,7 +176,7 @@ methodmap FallenWarrior < CClotBody
 		i_NpcWeight[npc.index] = 4;
 		FormatEx(c_HeadPlaceAttachmentGibName[npc.index], sizeof(c_HeadPlaceAttachmentGibName[]), "head");
 
-		int iActivity = npc.LookupActivity("ACT_CUSTOM_WALK_SAMURAI");
+		int iActivity = npc.LookupActivity("ACT_GULN_CORRUPTED_FIRST_WALK");
 		if(iActivity > 0) npc.StartActivity(iActivity);
 		
 		if(ally == TFTeam_Red)
@@ -215,6 +215,7 @@ methodmap FallenWarrior < CClotBody
 		npc.StartPathing();
 		npc.m_flSpeed = 250.0;
 		npc.m_flNextRangedAttack = GetGameTime();
+		npc.m_iChanged_WalkCycle = -1;
 		
 		
 		int skin = 1;
@@ -248,6 +249,9 @@ methodmap FallenWarrior < CClotBody
 		SetEntityRenderColor(npc.m_iWearable4, 200, 50, 50, 255);
 		SetEntityRenderColor(npc.m_iWearable5, 150, 150, 150, 255);
 		SetEntityRenderColor(npc.m_iWearable6, 200, 150, 100, 255);
+		i_fallen_headparticle[npc.index] = -1;
+		i_fallen_eyeparticle[npc.index] = -1;
+		i_fallen_bodyparticle[npc.index] = -1;
 
 		if(ally != TFTeam_Red)
 		{
@@ -294,6 +298,7 @@ public void FallenWarrior_ClotThink(int iNPC)
 	}
 	npc.m_flNextThinkTime = GetGameTime(npc.index) + 0.1;
 	
+	GulnChangeWalkAnimation(npc);
 	
 	if(npc.m_flGetClosestTargetTime < GetGameTime(npc.index))
 	{
@@ -321,14 +326,6 @@ public void FallenWarrior_ClotThink(int iNPC)
 
 	if(npc.m_bLostHalfHealth)
 	{
-		if(npc.m_flSpeed > 250.0)
-		{
-			npc.m_flSpeed = 250.0;
-		}
-		if(npc.m_flSpeed < 250.0)
-		{
-			npc.m_flSpeed += 100.0;
-		}
 		TrueArmor *= 0.5;
 		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 2);
 		if(!npc.Anger)
@@ -672,6 +669,49 @@ void FallenWarrior_ApplyDebuffInLocation(float BannerPos[3], int Team)
 			{
 				ApplyStatusEffect(ally, ally, "Heavy Presence", 1.0);
 			}
+		}
+	}
+}
+
+
+void GulnChangeWalkAnimation(FallenWarrior npc)
+{
+	if(i_fallen_headparticle[npc.index] != -1)
+	{
+		if(npc.Anger)
+		{
+			if(npc.m_iChanged_WalkCycle != 1)
+			{
+				npc.m_bisWalking = true;
+				npc.m_iChanged_WalkCycle = 1;
+				npc.SetActivity("ACT_GULN_CORRUPTED_FIRST_WALK");
+				npc.StartPathing();
+				npc.m_flSpeed = 250.0;
+			}	
+		}
+		else
+		{
+			if(npc.m_iChanged_WalkCycle != 2)
+			{
+				npc.m_bisWalking = true;
+				npc.m_iChanged_WalkCycle = 2;
+				npc.SetActivity("ACT_GULN_CORRUPTED_SECOND_WALK");
+				npc.StartPathing();
+				npc.m_flSpeed = 330.0;
+			}	
+		}
+		//Corrupted guln
+		return;
+	}
+	else
+	{
+		if(npc.m_iChanged_WalkCycle != 3)
+		{
+			npc.m_bisWalking = true;
+			npc.m_iChanged_WalkCycle = 3;
+			npc.SetActivity("ACT_GULN_CORRUPTED_NORMAL_WALK");
+			npc.StartPathing();
+			npc.m_flSpeed = 250.0;
 		}
 	}
 }

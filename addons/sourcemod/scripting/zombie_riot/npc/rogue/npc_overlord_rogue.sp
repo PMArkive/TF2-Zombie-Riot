@@ -191,7 +191,7 @@ methodmap OverlordRogue < CClotBody
 		
 		FormatEx(c_HeadPlaceAttachmentGibName[npc.index], sizeof(c_HeadPlaceAttachmentGibName[]), "head");
 		
-		int iActivity = npc.LookupActivity("ACT_PRINCE_IDLE");
+		int iActivity = npc.LookupActivity("ACT_LAST_OVERLORD_WALK");
 		if(iActivity > 0) npc.StartActivity(iActivity);
 		
 		npc.m_flNextMeleeAttack = 0.0;
@@ -245,7 +245,7 @@ methodmap OverlordRogue < CClotBody
 		GiveNpcOutLineLastOrBoss(npc.index, true);
 		
 		npc.m_iWearable2 = npc.EquipItem("weapon_bone", "models/weapons/c_models/c_claymore/c_claymore.mdl");
-		SetVariantString("1.75");
+		SetVariantString("1.0");
 		AcceptEntityInput(npc.m_iWearable2, "SetModelScale");
 		
 		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 2);
@@ -316,7 +316,7 @@ public void OverlordRogue_ClotThink(int iNPC)
 					if(npc.m_iChanged_WalkCycle != 7)
 					{
 						npc.m_iChanged_WalkCycle = 7;
-						npc.SetActivity("ACT_PRINCE_WALK");
+						npc.SetActivity("ACT_LAST_OVERLORD_WALK");
 					}
 					npc.m_flmovedelay = GetGameTime(npc.index) + 1.0;
 					npc.m_flSpeed = 73.6;
@@ -326,7 +326,7 @@ public void OverlordRogue_ClotThink(int iNPC)
 					if(npc.m_iChanged_WalkCycle != 8)
 					{
 						npc.m_iChanged_WalkCycle = 8;
-						npc.SetActivity("ACT_RUN_SHIELDZOBIE");
+						npc.SetActivity("ACT_LAST_OVERLORD_CHARGE_LOOP");
 					}
 					npc.m_flmovedelay = GetGameTime(npc.index) + 1.0;
 					npc.m_flSpeed = 380.0;
@@ -376,7 +376,7 @@ public void OverlordRogue_ClotThink(int iNPC)
 					npc.DispatchParticleEffect(npc.index, "hightower_explosion", NULL_VECTOR, NULL_VECTOR, NULL_VECTOR, npc.FindAttachment("anim_attachment_LH"), PATTACH_POINT_FOLLOW, true);
 				}
 				npc.PlaySpecialChargeSound();
-				npc.SetActivity("ACT_RUN_SHIELDZOBIE");
+				npc.SetActivity("ACT_LAST_OVERLORD_CHARGE_LOOP");
 				npc.m_flmovedelay = GetGameTime(npc.index) + 0.5;
 				npc.m_flJumpStartTime = GetGameTime(npc.index) + 2.0;
 				NPC_StopPathing(npc.index);
@@ -390,7 +390,7 @@ public void OverlordRogue_ClotThink(int iNPC)
 				{
 					NPC_StopPathing(npc.index);
 					npc.m_bPathing = false;
-					npc.AddGesture("ACT_MELEE_PULSE");
+					npc.AddGesture("ACT_LAST_OVERLORD_FIRE");
 					npc.m_flRangedSpecialDelay = GetGameTime(npc.index) + 0.3;
 					npc.m_fbRangedSpecialOn = true;
 					npc.m_flReloadDelay = GetGameTime(npc.index) + 0.4;
@@ -418,8 +418,7 @@ public void OverlordRogue_ClotThink(int iNPC)
 					if (!npc.m_flAttackHappenswillhappen)
 					{
 						npc.m_flNextRangedSpecialAttack = GetGameTime(npc.index) + 2.0;
-						npc.RemoveGesture(npc.m_flAngerDelay > GetGameTime(npc.index) ? "ACT_GENERAL_ATTACK_POKE" : "ACT_ACHILLES_ATTACK_DAGGER");
-						npc.AddGesture(npc.m_flAngerDelay > GetGameTime(npc.index) ? "ACT_GENERAL_ATTACK_POKE" : "ACT_ACHILLES_ATTACK_DAGGER",_, 0.25);
+						npc.AddGesture("ACT_LAST_OVERLORD_ATTACK");
 						npc.PlayMeleeSound();
 						npc.m_flAttackHappens = GetGameTime(npc.index)+0.3;
 						npc.m_flAttackHappens_bullshit = GetGameTime(npc.index)+0.44;
