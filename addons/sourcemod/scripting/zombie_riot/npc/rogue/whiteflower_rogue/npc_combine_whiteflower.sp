@@ -256,7 +256,7 @@ methodmap Whiteflower_Boss < CClotBody
 		FormatEx(c_HeadPlaceAttachmentGibName[npc.index], sizeof(c_HeadPlaceAttachmentGibName[]), "head");
 		KillFeed_SetKillIcon(npc.index, "sword");
 
-		npc.AddActivityViaSequence("p_jumpuploop");
+		npc.AddActivityViaSequence("whiteflower_idle");
 
 		npc.m_bisWalking = false;
 
@@ -698,7 +698,7 @@ public void Whiteflower_Boss_ClotThink(int iNPC)
 				{
 					npc.m_bisWalking = true;
 					npc.m_iChanged_WalkCycle = 4;
-					npc.SetActivity("ACT_RUN");
+					npc.SetActivity("ACT_WHITEFLOWER_RUN");
 					npc.m_flSpeed = 350.0;
 					NPC_StartPathing(iNPC);
 				}
@@ -713,7 +713,7 @@ public void Whiteflower_Boss_ClotThink(int iNPC)
 				{
 					npc.m_bisWalking = true;
 					npc.m_iChanged_WalkCycle = 4;
-					npc.SetActivity("ACT_RUN");
+					npc.SetActivity("ACT_WHITEFLOWER_RUN");
 					npc.m_flSpeed = 350.0;
 					NPC_StartPathing(iNPC);
 				}
@@ -724,7 +724,13 @@ public void Whiteflower_Boss_ClotThink(int iNPC)
 				{
 					npc.m_iTarget = Enemy_I_See;
 
-					npc.AddGesture("ACT_MELEE_ATTACK_SWING_GESTURE", _,_,_,1.0);
+					switch(GetRandomInt(0,1))
+					{
+						case 0:
+							npc.AddGesture("ACT_WHITEFLOWER_ATTACK_LEFT", _,_,_,1.0);
+						case 1:
+							npc.AddGesture("ACT_WHITEFLOWER_ATTACK_RIGHT", _,_,_,1.0);
+					}
 
 					npc.PlayMeleeSound();
 					
@@ -743,7 +749,7 @@ public void Whiteflower_Boss_ClotThink(int iNPC)
 				{
 					npc.m_bisWalking = true;
 					npc.m_iChanged_WalkCycle = 4;
-					npc.SetActivity("ACT_RUN");
+					npc.SetActivity("ACT_WHITEFLOWER_RUN");
 					npc.m_flSpeed = 350.0;
 					NPC_StartPathing(iNPC);
 				}
@@ -790,8 +796,8 @@ public void Whiteflower_Boss_ClotThink(int iNPC)
 					{
 						npc.m_bisWalking = false;
 						npc.m_iChanged_WalkCycle = 5;
-						npc.SetActivity("ACT_RANGE_ATTACK_THROW");
-						npc.SetPlaybackRate(1.5);
+						npc.SetActivity("ACT_WHITEFLOWER_BOMB");
+						npc.SetPlaybackRate(1.0);
 						NPC_StopPathing(npc.index);
 						npc.m_bPathing = false;	
 					}
@@ -883,7 +889,7 @@ public void Whiteflower_Boss_ClotThink(int iNPC)
 					{
 						npc.m_bisWalking = true;
 						npc.m_iChanged_WalkCycle = 4;
-						npc.SetActivity("ACT_RUN");
+						npc.SetActivity("ACT_WHITEFLOWER_RUN");
 						npc.m_flSpeed = 350.0;
 						NPC_StartPathing(iNPC);
 					}
