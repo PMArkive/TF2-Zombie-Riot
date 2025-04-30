@@ -106,8 +106,8 @@ void DHook_Setup()
 	DHook_CreateDetour(gamedata, "CTFBaseBoss::ResolvePlayerCollision", DHook_ResolvePlayerCollisionPre, _);
 	DHook_CreateDetour(gamedata, "CTFGCServerSystem::PreClientUpdate", DHook_PreClientUpdatePre, DHook_PreClientUpdatePost);
 	DHook_CreateDetour(gamedata, "CTFSpellBook::CastSelfStealth", Dhook_StealthCastSpellPre, _);
-//	DHook_CreateDetour(gamedata, "PassServerEntityFilter", CH_PassServerEntityFilter);
-// Dhooking it like this is broken.
+	DHook_CreateDetour(gamedata, "PassServerEntityFilter", CH_PassServerEntityFilter);
+//	Dhooking it like this is broken. on linux
 	
 	g_DHookGrenadeExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookGrenade_Detonate = DHook_CreateVirtual(gamedata, "CBaseGrenade::Detonate");
@@ -847,7 +847,7 @@ public MRESReturn DHook_RocketExplodePre(int entity, DHookParam params)
 	return MRES_Supercede;
 }
 
-/*
+
 public MRESReturn CH_PassServerEntityFilter(DHookReturn ret, DHookParam params) 
 {
 	int toucher = DHookGetParam(params, 1);
@@ -861,7 +861,7 @@ public MRESReturn CH_PassServerEntityFilter(DHookReturn ret, DHookParam params)
 	ret.Value = false;
 	return MRES_Supercede;
 }
-*/
+
 public Action CH_PassFilter(int ent1, int ent2, bool &result)
 {
 	if(!(ent1 >= 0 && ent1 <= MAXENTITIES && ent2 >= 0 && ent2 <= MAXENTITIES))
