@@ -1030,16 +1030,46 @@ public void OnPostThink(int client)
 					FormatEx(buffer, sizeof(buffer), "%s [▼ %0.f％]",buffer, ReinforcePoint(client) * 100.0);
 				}
 			}
-			if(GetAbilitySlotCount(client) == 8)
+			switch(GetAbilitySlotCount(client))
 			{
-				had_An_ability = true;
-				if(MorphineMaxed(client))
+				case 8:
 				{
-					FormatEx(buffer, sizeof(buffer), "%s [Ḿ MAX]",buffer);
+					had_An_ability = true;
+					if(MorphineMaxed(client))
+					{
+						FormatEx(buffer, sizeof(buffer), "%s [Ḿ MAX]",buffer);
+					}
+					else
+					{
+						FormatEx(buffer, sizeof(buffer), "%s [Ḿ %0.f％]",buffer, MorphineChargeFunc(client) * 100.0);
+					}
 				}
-				else
+				case M3_COSMIC_BEAM:
 				{
-					FormatEx(buffer, sizeof(buffer), "%s [Ḿ %0.f％]",buffer, MorphineChargeFunc(client) * 100.0);
+					had_An_ability = true;
+
+					float Duration = CosmicBeamActiveTime(client) - GetGameTime(); 
+					//Beeam Is Active, show how long until it turns off
+					if(Duration > 0.0)
+					{
+						FormatEx(buffer, sizeof(buffer), "%s [Orb Active {%.1fs}]",buffer, Duration);
+					}
+					//max amount of global cosmics have been used.
+					else if(IsCosmicBeamMaxxed())
+					{
+						FormatEx(buffer, sizeof(buffer), "%s [Orb Offline]",buffer);
+					}
+					else
+					{
+						int Uses = CosmicBeamsUsed();
+
+						float Charge = CosmicBeamChargeAmount(client);
+						//beam is still not ready to be activated.
+						if(Charge < 1.0)
+							FormatEx(buffer, sizeof(buffer), "%s [Orb %0.f％ | %i]",buffer, CosmicBeamChargeAmount(client)*100.0, Uses);
+						else
+							FormatEx(buffer, sizeof(buffer), "%s [Orb READY | %i]",buffer, Uses);
+					}
 				}
 			}
 #endif

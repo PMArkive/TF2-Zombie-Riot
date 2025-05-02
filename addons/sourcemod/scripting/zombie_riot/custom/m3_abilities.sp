@@ -1,8 +1,8 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-static float ability_cooldown[MAXPLAYERS+1]={0.0, ...};
-static float ability_cooldown_2[MAXPLAYERS+1]={0.0, ...};
+float fl_m3_ability_cooldown[MAXPLAYERS+1]={0.0, ...};
+static float fl_m3_ability_cooldown_2[MAXPLAYERS+1]={0.0, ...};
 static int Attack3AbilitySlotArray[MAXPLAYERS+1]={0, ...};
 static float f_HealDelay[MAXENTITIES];
 static float f_Duration[MAXENTITIES];
@@ -16,6 +16,15 @@ static float f_ReinforceTillMax[MAXTF2PLAYERS];
 static bool b_ReinforceReady_soundonly[MAXTF2PLAYERS];
 static int i_MaxRevivesAWave;
 static float MorphineCharge[MAXPLAYERS+1]={0.0, ...};
+
+enum 
+{
+	M3_COSMIC_BEAM = 9
+}
+
+#include "zombie_riot/custom/m3_abilities/cosmic_beam.sp"
+
+
 
 static const char g_TeleSounds[][] = {
 	"weapons/rescue_ranger_teleport_receive_01.wav",
@@ -72,12 +81,15 @@ public void M3_Abilities_Precache()
 	PrecacheSound("weapons/air_burster_explode3.wav");
 	HookEntityOutput("func_movelinear", "OnFullyOpen", OnBombDrop);
 	PrecacheSound("weapons/slam/throw.wav");
+
+
+	CosmicBeam_OnMapStart();
 }
 public void M3_ClearAll()
 {
 	Zero(b_ActivatedDuringLastMann);
-	Zero(ability_cooldown);
-	Zero(ability_cooldown_2);
+	Zero(fl_m3_ability_cooldown);
+	Zero(fl_m3_ability_cooldown_2);
 	Zero(Attack3AbilitySlotArray);
 	Zero(f_HealDelay);
 	Zero(f_Duration);
@@ -134,6 +146,10 @@ public void M3_Abilities(int client)
 		{
 			MorphineShot(client);
 		}
+		case M3_COSMIC_BEAM:
+		{
+			Initiate_Cosmic_Beam(client);
+		}
 	}
 }
 
@@ -142,6 +158,8 @@ void M3_AbilitiesWaveEnd()
 	Zero(i_BurstpackUsedThisRound);
 	Zero(i_MaxMorhpinesThisRound);
 	i_MaxRevivesAWave = 0;
+
+	CosmicBeam_OnWaveEnd();
 }
 
 bool MorphineMaxed(int client)
@@ -213,14 +231,14 @@ public void WeakDash(int client)
 {
 	if(dieingstate[client] > 0)
 	{
-		if (ability_cooldown_2[client] < GetGameTime())
+		if (fl_m3_ability_cooldown_2[client] < GetGameTime())
 		{
-			ability_cooldown_2[client] = GetGameTime() + 120.0;
+			fl_m3_ability_cooldown_2[client] = GetGameTime() + 120.0;
 			WeakDashLogic(client);
 		}
 		else
 		{
-			float Ability_CD = ability_cooldown_2[client] - GetGameTime();
+			float Ability_CD = fl_m3_ability_cooldown_2[client] - GetGameTime();
 			
 			if(Ability_CD <= 0.0)
 				Ability_CD = 0.0;
@@ -233,7 +251,7 @@ public void WeakDash(int client)
 	}
 	else
 	{
-		if (ability_cooldown[client] < GetGameTime())
+		if (fl_m3_ability_cooldown[client] < GetGameTime())
 		{
 			if(i_BurstpackUsedThisRound[client] >= 2)
 			{
@@ -244,12 +262,12 @@ public void WeakDash(int client)
 				return;
 			}
 			i_BurstpackUsedThisRound[client] += 1;
-			ability_cooldown[client] = GetGameTime() + (60.0 * CooldownReductionAmount(client));
+			fl_m3_ability_cooldown[client] = GetGameTime() + (60.0 * CooldownReductionAmount(client));
 			WeakDashLogic(client);
 		}
 		else
 		{
-			float Ability_CD = ability_cooldown[client] - GetGameTime();
+			float Ability_CD = fl_m3_ability_cooldown[client] - GetGameTime();
 			
 			if(Ability_CD <= 0.0)
 				Ability_CD = 0.0;
@@ -303,10 +321,10 @@ public void WeakDashLogic(int client)
 
 public void PlaceableTempomaryArmorGrenade(int client)
 {
-	if (ability_cooldown[client] < GetGameTime())
+	if (fl_m3_ability_cooldown[client] < GetGameTime())
 	{
 		EmitSoundToAll("weapons/slam/throw.wav", client, _, 80, _, 0.7);
-		ability_cooldown[client] = GetGameTime() + (120.0 * CooldownReductionAmount(client));
+		fl_m3_ability_cooldown[client] = GetGameTime() + (120.0 * CooldownReductionAmount(client));
 		int entity;
 
 		if(b_StickyExtraGrenades[client])
@@ -376,7 +394,7 @@ public void PlaceableTempomaryArmorGrenade(int client)
 	}
 	else
 	{
-		float Ability_CD = ability_cooldown[client] - GetGameTime();
+		float Ability_CD = fl_m3_ability_cooldown[client] - GetGameTime();
 		
 		if(Ability_CD <= 0.0)
 			Ability_CD = 0.0;
@@ -483,10 +501,10 @@ public Action Timer_Detect_Player_Near_Armor_Grenade(Handle timer, DataPack pack
 
 public void PlaceableTempomaryHealingGrenade(int client)
 {
-	if (ability_cooldown[client] < GetGameTime())
+	if (fl_m3_ability_cooldown[client] < GetGameTime())
 	{
 		EmitSoundToAll("weapons/slam/throw.wav", client, _, 80, _, 0.7);
-		ability_cooldown[client] = GetGameTime() + (140.0 * CooldownReductionAmount(client));
+		fl_m3_ability_cooldown[client] = GetGameTime() + (140.0 * CooldownReductionAmount(client));
 		
 		int entity;		
 		if(b_StickyExtraGrenades[client])
@@ -558,7 +576,7 @@ public void PlaceableTempomaryHealingGrenade(int client)
 	}
 	else
 	{
-		float Ability_CD = ability_cooldown[client] - GetGameTime();
+		float Ability_CD = fl_m3_ability_cooldown[client] - GetGameTime();
 		
 		if(Ability_CD <= 0.0)
 			Ability_CD = 0.0;
@@ -694,7 +712,7 @@ public Action Timer_Detect_Player_Near_Healing_Grenade(Handle timer, DataPack pa
 
 public void ReconstructiveTeleporter(int client)
 {
-	if(ability_cooldown[client] < GetGameTime() || CvarInfiniteCash.BoolValue)
+	if(fl_m3_ability_cooldown[client] < GetGameTime() || CvarInfiniteCash.BoolValue)
 	{
 		float WorldSpaceVec[3];
 		bool IsLiveBarrackUnits=false;
@@ -727,7 +745,7 @@ public void ReconstructiveTeleporter(int client)
 		}
 		if(!CvarInfiniteCash.BoolValue)
 		{
-			ability_cooldown[client] = GetGameTime() + (70.0 * CooldownReductionAmount(client));
+			fl_m3_ability_cooldown[client] = GetGameTime() + (70.0 * CooldownReductionAmount(client));
 		}
 		WorldSpaceCenter(client, WorldSpaceVec);
 		ParticleEffectAt(WorldSpaceVec, "teleported_red", 0.5);
@@ -735,7 +753,7 @@ public void ReconstructiveTeleporter(int client)
 	}
 	else
 	{
-		float Ability_CD = ability_cooldown[client] - GetGameTime();
+		float Ability_CD = fl_m3_ability_cooldown[client] - GetGameTime();
 		
 		if(Ability_CD <= 0.0)
 			Ability_CD = 0.0;
@@ -851,9 +869,9 @@ public void Reinforce(int client, bool NoCD)
 	{
 		if(!NoCD)
 		{
-			if(ability_cooldown[client] > GetGameTime())
+			if(fl_m3_ability_cooldown[client] > GetGameTime())
 			{
-				float Ability_CD = ability_cooldown[client] - GetGameTime();
+				float Ability_CD = fl_m3_ability_cooldown[client] - GetGameTime();
 
 				if(Ability_CD <= 0.0)
 					Ability_CD = 0.0;
@@ -1371,13 +1389,13 @@ public void GearTesting(int client)
 {
 	if(dieingstate[client] > 0)
 	{
-		if (ability_cooldown_2[client] < GetGameTime())
+		if (fl_m3_ability_cooldown_2[client] < GetGameTime())
 		{
 	//		PrintToChatAll("User is dead");
 		}
 		else
 		{
-			float Ability_CD = ability_cooldown_2[client] - GetGameTime();
+			float Ability_CD = fl_m3_ability_cooldown_2[client] - GetGameTime();
 			
 			if(Ability_CD <= 0.0)
 				Ability_CD = 0.0;
@@ -1390,9 +1408,9 @@ public void GearTesting(int client)
 	}
 	else
 	{
-		if (ability_cooldown[client] < GetGameTime())
+		if (fl_m3_ability_cooldown[client] < GetGameTime())
 		{
-			ability_cooldown[client] = GetGameTime() + (350.0 * CooldownReductionAmount(client));
+			fl_m3_ability_cooldown[client] = GetGameTime() + (350.0 * CooldownReductionAmount(client));
 
 			SetEntityMoveType(client, MOVETYPE_NONE);
 
@@ -1431,7 +1449,7 @@ public void GearTesting(int client)
 		}
 		else
 		{
-			float Ability_CD = ability_cooldown[client] - GetGameTime();
+			float Ability_CD = fl_m3_ability_cooldown[client] - GetGameTime();
 			
 			if(Ability_CD <= 0.0)
 				Ability_CD = 0.0;
@@ -1543,7 +1561,7 @@ void UnequipQuantumSet(int client)
 
 public float GetAbilityCooldownM3(int client)
 {
-	return ability_cooldown[client] - GetGameTime();
+	return fl_m3_ability_cooldown[client] - GetGameTime();
 }
 
 
@@ -1559,10 +1577,10 @@ public int GetAbilitySlotCount(int client)
 
 public void PlaceableTempomaryRepairGrenade(int client)
 {
-	if (ability_cooldown[client] < GetGameTime())
+	if (fl_m3_ability_cooldown[client] < GetGameTime())
 	{
 		EmitSoundToAll("weapons/slam/throw.wav", client, _, 80, _, 0.7);
-		ability_cooldown[client] = GetGameTime() + (100.0 * CooldownReductionAmount(client));
+		fl_m3_ability_cooldown[client] = GetGameTime() + (100.0 * CooldownReductionAmount(client));
 		
 		int entity;		
 		if(b_StickyExtraGrenades[client])
@@ -1632,7 +1650,7 @@ public void PlaceableTempomaryRepairGrenade(int client)
 	}
 	else
 	{
-		float Ability_CD = ability_cooldown[client] - GetGameTime();
+		float Ability_CD = fl_m3_ability_cooldown[client] - GetGameTime();
 		
 		if(Ability_CD <= 0.0)
 			Ability_CD = 0.0;

@@ -1270,6 +1270,7 @@ public void NPC_OnTakeDamage_Post(int victim, int attacker, int inflictor, float
 			GiveRageOnDamage(inflictor, Damageaftercalc);
 #if defined ZR
 			GiveMorphineOnDamage(inflictor, victim, Damageaftercalc, damagetype);
+			GiveCosmicOnDamage(inflictor, victim, Damageaftercalc, damagetype);
 #endif
 			Calculate_And_Display_hp(inflictor, victim, Damageaftercalc, false);
 		}
@@ -1278,6 +1279,7 @@ public void NPC_OnTakeDamage_Post(int victim, int attacker, int inflictor, float
 			GiveRageOnDamage(attacker, Damageaftercalc);
 #if defined ZR
 			GiveMorphineOnDamage(attacker, victim, Damageaftercalc, damagetype);
+			GiveCosmicOnDamage(attacker, victim, Damageaftercalc, damagetype);
 #endif
 			Calculate_And_Display_hp(attacker, victim, Damageaftercalc, false);	
 		}
