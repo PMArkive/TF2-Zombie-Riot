@@ -10,6 +10,14 @@
 		"#format"	"{1:d},{2:t}"
 		"en"		"{orange}(Construct) {red}Used {1} {2}!"
 	}
+	"Battle Finished"
+	{
+		"en"		"{orange}(Construct) The battle is over!"
+	}
+	"Cash"
+	{
+		"en"		"Cash"
+	}
 	"Resource Attack Started"
 	{
 		"#format"	"{1:N},{2:t}"
@@ -569,7 +577,7 @@
 	}
 	"Flagship Calling Desc"
 	{
-		"en"	"Recover a high-grade weapon in the store at a discount."
+		"en"	"Increase Movementspeed by 10％\nGain the ''Ziberian Flagship Weaponry''."
 	}
 	"Tranquilizer Turret"
 	{

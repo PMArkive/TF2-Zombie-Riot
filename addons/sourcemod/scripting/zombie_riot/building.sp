@@ -818,9 +818,12 @@ public void Pickup_Building_M2(int client, int weapon, bool crit)
 	if (!i_IsABuilding[entity])
 		return;
 
-	if(GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity") != client && GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity") <= MaxClients)
-		return;
 	ObjectGeneric objstats = view_as<ObjectGeneric>(entity);
+	if(GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity") != client && GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity") <= MaxClients)
+	{
+		if(!objstats.m_bConstructBuilding)
+			return; //anyone can pick up construct buildings!
+	}
 	if(IsValidEntity(objstats.m_iMasterBuilding))
 	{
 		entity = objstats.m_iMasterBuilding;
@@ -2140,14 +2143,6 @@ bool MountBuildingToBackInternal(int client, bool AllowAnyBuilding)
 		SDKUnhook(objstats.m_iWearable1, SDKHook_SetTransmit, SetTransmit_BuildingReady);
 	//	SDKUnhook(objstats.m_iWearable1, SDKHook_SetTransmit, SetTransmit_BuildingNotReady);
 	}
-	/*
-	if(IsValidEntity(objstats.m_iWearable2))
-	{
-		SetEntPropFloat(objstats.m_iWearable2, Prop_Send, "m_flModelScale", ModelScale);
-		b_IsEntityAlwaysTranmitted[objstats.m_iWearable2] = true;		
-		SDKUnhook(objstats.m_iWearable2, SDKHook_SetTransmit, SetTransmit_BuildingReady);
-	}
-	*/
 
 	
 	//update text
@@ -2363,16 +2358,6 @@ void UnequipDispenser(int client, bool destroy = false)
 	//	SDKUnhook(objstats.m_iWearable1, SDKHook_SetTransmit, SetTransmit_BuildingNotReady);
 	//	SDKHook(objstats.m_iWearable1, SDKHook_SetTransmit, SetTransmit_BuildingNotReady);
 	}
-	/*
-	if(IsValidEntity(objstats.m_iWearable2))
-	{
-		SetEntPropFloat(objstats.m_iWearable2, Prop_Send, "m_flModelScale", ModelScale);
-		b_IsEntityAlwaysTranmitted[objstats.m_iWearable2] = false;
-	//	SetEntPropFloat(objstats.m_iWearable2, Prop_Send, "m_fadeMaxDist", 0.0);		
-		SDKUnhook(objstats.m_iWearable2, SDKHook_SetTransmit, SetTransmit_BuildingReady);
-		SDKHook(objstats.m_iWearable2, SDKHook_SetTransmit, SetTransmit_BuildingReady);	
-	}
-	*/
 
 	//update text
 	objstats.m_flNextDelayTime = 0.0;

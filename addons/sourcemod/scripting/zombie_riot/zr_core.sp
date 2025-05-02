@@ -220,6 +220,8 @@ enum
 	WEAPON_TORNADO_BLITZ = 143,
 	WEAPON_BUFFPOTION = 144,
 	WEAPON_REIUJI_WAND = 145,
+	WEAPON_CHEESY_MELEE = 146,
+	WEAPON_CHEESY_PRIMARY = 147,
 }
 
 enum
@@ -260,6 +262,7 @@ ConVar zr_minibossconfig;
 ConVar zr_ignoremapconfig;
 ConVar zr_smallmapbalancemulti;
 ConVar CvarNoRoundStart;
+ConVar Cvar_VshMapFix;
 ConVar CvarNoSpecialZombieSpawn;
 ConVar zr_disablerandomvillagerspawn;
 ConVar zr_waitingtime;
@@ -604,6 +607,7 @@ float fl_MatrixReflect[MAXENTITIES];
 #include "custom/weapon_kritzkrieg.sp"
 #include "custom/wand/weapon_bubble_wand.sp"
 #include "custom/kit_blacksmith_grill.sp"
+#include "custom/kit_cheese.sp"
 
 void ZR_PluginLoad()
 {
@@ -810,10 +814,6 @@ void ZR_MapStart()
 	Waves_MapStart();
 	Freeplay_OnMapStart();
 	Music_MapStart();
-	Star_Shooter_MapStart();
-	Bison_MapStart();
-	Pomson_MapStart();
-	Mangler_MapStart();
 	Wand_Map_Precache();
 	Wand_Skulls_Precache();
 	Wand_Attackspeed_Map_Precache();
@@ -848,8 +848,6 @@ void ZR_MapStart()
 	BoomStick_MapPrecache();
 	MG42_Map_Precache();
 	Charged_Handgun_Map_Precache();
-	TBB_Precahce_Mangler_2();
-	BeamWand_MapStart();
 	M3_Abilities_Precache();
 	Ark_autoaim_Map_Precache();
 	Wand_LightningPap_Map_Precache();
@@ -911,6 +909,7 @@ void ZR_MapStart()
 	Purnell_MapStart();
 	Kritzkrieg_OnMapStart();
 	BubbleWand_MapStart();
+	Cheese_MapStart();
 	
 	Zombies_Currently_Still_Ongoing = 0;
 	// An info_populator entity is required for a lot of MvM-related stuff (preserved entity)
@@ -933,6 +932,9 @@ void ZR_MapStart()
 
 public void OnMapInit()
 {
+	if(!Cvar_VshMapFix.BoolValue)
+		return;
+		//skip
 	OnMapInit_ZR();
 
 	//nerf full health kits
@@ -995,8 +997,6 @@ public Action GlobalTimer(Handle timer)
 			{
 				Music_Update(client);
 			}
-			
-			PlayerApplyDefaults(client);
 		}
 	}
 	
@@ -1005,6 +1005,16 @@ public Action GlobalTimer(Handle timer)
 	
 	Zombie_Delay_Warning();
 	Spawners_Timer();
+	if(frame % 100)
+		return Plugin_Continue;
+
+	for(int client=1; client<=MaxClients; client++)
+	{
+		if(IsClientInGame(client))
+		{
+			PlayerApplyDefaults(client);
+		}
+	}
 	return Plugin_Continue;
 }
 
@@ -2026,6 +2036,11 @@ void CheckAlivePlayers(int killed=0, int Hurtviasdkhook = 0, bool TestLastman = 
 							CPrintToChatAll("{crimson}The merchant knows not who to trade with... Thus massively enrages.",client);
 							Yakuza_Lastman(10);
 						}
+						if(Is_Cheesed_Up(client))
+						{
+							CPrintToChatAll("{darkviolet}%N decides to Plasmify himself as a last resort...", client);
+							Yakuza_Lastman(11);
+						}
 						
 						for(int i=1; i<=MaxClients; i++)
 						{
@@ -2665,14 +2680,8 @@ void PlayerApplyDefaults(int client)
 		
 		if(point_difference > 0)
 		{
-			if(Classic_Mode() || ZR_Waves_GetRound() > 59)
-			{
-				GiveXP(client, point_difference / 10); //Any round above 60 will give way less xp due to just being xp grind fests. This includes the bloons rounds as the points there get ridicilous at later rounds.
-			}
-			else
-			{
-				GiveXP(client, point_difference);
-			}
+			//Too much xp given, we have to reduce it by 10x
+			GiveXP(client, point_difference / 5);
 		}
 		
 		i_PreviousPointAmount[client] = PlayerPoints[client];
@@ -2895,7 +2904,7 @@ bool PlayerIsInNpcBattle(int client, float ExtradelayTime = 0.0)
 }
 
 
-void ForcePlayerWin()
+void ForcePlayerWin(bool fakeout = false)
 {
 	for(int client = 1; client <= MaxClients; client++)
 	{
@@ -2906,7 +2915,8 @@ void ForcePlayerWin()
 			SendConVarValue(client, sv_cheats, "1");
 		}
 	}
-	ResetReplications();
+	if(!fakeout)
+		ResetReplications();
 
 	cvarTimeScale.SetFloat(0.1);
 	CreateTimer(0.5, SetTimeBack);
@@ -2918,14 +2928,17 @@ void ForcePlayerWin()
 
 	EmitCustomToAll("#zombiesurvival/music_win_1.mp3", _, SNDCHAN_STATIC, SNDLEVEL_NONE, _, 2.0);
 
-	MVMHud_Disable();
-	int entity = CreateEntityByName("game_round_win"); 
-	DispatchKeyValue(entity, "force_map_reset", "1");
-	SetEntProp(entity, Prop_Data, "m_iTeamNum", TFTeam_Red);
-	DispatchSpawn(entity);
-	AcceptEntityInput(entity, "RoundWin");
-	RemoveAllCustomMusic();
-	Native_ZR_OnWinTeam(TFTeam_Red);
+	if(!fakeout)
+	{
+		MVMHud_Disable();
+		int entity = CreateEntityByName("game_round_win"); 
+		DispatchKeyValue(entity, "force_map_reset", "1");
+		SetEntProp(entity, Prop_Data, "m_iTeamNum", TFTeam_Red);
+		DispatchSpawn(entity);
+		AcceptEntityInput(entity, "RoundWin");
+		RemoveAllCustomMusic();
+		Native_ZR_OnWinTeam(TFTeam_Red);
+	}
 }
 
 void ForcePlayerLoss()
@@ -2975,4 +2988,5 @@ void ZR_FastDownloadForce()
 	ZealotMusicDownload();
 	YakuzaMusicDownload();
 	FullmoonDownload();
+	Cheese_PrecacheMusic();
 }

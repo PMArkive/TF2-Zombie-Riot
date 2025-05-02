@@ -50,6 +50,7 @@ char c_NpcName[MAXENTITIES][255];
 int i_SpeechBubbleEntity[MAXENTITIES];
 PathFollower g_NpcPathFollower[ZR_MAX_NPCS];
 static int g_modelArrow;
+//static int g_iResolveOffset;
 
 float f3_AvoidOverrideMin[MAXENTITIES][3];
 float f3_AvoidOverrideMax[MAXENTITIES][3];
@@ -449,12 +450,16 @@ methodmap CClotBody < CBaseCombatCharacter
 		{
 			DispatchKeyValue(npc, "solid", "2");
 		}
-
+		
 		b_NpcHasDied[npc] = false;
 		i_FailedTriesUnstuck[npc][0] = 0;
 		i_FailedTriesUnstuck[npc][1] = 0;
 		flNpcCreationTime[npc] = GetGameTime();
 		DispatchSpawn(npc); //Do this at the end :)
+
+	//	if(NpcTypeLogic == NORMAL_NPC)
+	//Crashes
+	//		SetEntData(npc, FindSendPropInfo("CTFBaseBoss", "m_lastHealthPercentage") + g_iResolveOffset, false, 1, true);
 
 		Hook_DHook_UpdateTransmitState(npc);
 		SDKHook(npc, SDKHook_TraceAttack, NPC_TraceAttack);
@@ -674,14 +679,14 @@ methodmap CClotBody < CBaseCombatCharacter
 		int sound = GetRandomInt(0, sizeof(g_GibSound) - 1);
 	
 		EmitSoundToAll(g_GibSound[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0, _, _);
-		EmitSoundToAll(g_GibSound[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0, _, _);
-		EmitSoundToAll(g_GibSound[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0, _, _);
+	//	EmitSoundToAll(g_GibSound[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0, _, _);
+	//	EmitSoundToAll(g_GibSound[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0, _, _);
 	}
 	public void PlayGibSoundMetal() { //ehehee this sound is funny 
 		int sound = GetRandomInt(0, sizeof(g_GibSoundMetal) - 1);
 	
 		EmitSoundToAll(g_GibSoundMetal[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0, _, _);
-		EmitSoundToAll(g_GibSoundMetal[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0, _, _);
+	//	EmitSoundToAll(g_GibSoundMetal[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0, _, _);
 	}
 	public void PlayStepSound(const char[] sound, float volume = 1.0, int Npc_Type = 1, bool custom = false)
 	{
@@ -2130,6 +2135,8 @@ methodmap CClotBody < CBaseCombatCharacter
 	//	this.SetSequence(iSequence);
 		this.SetPlaybackRate(1.0);
 		this.SetCycle(0.0);
+		//Its like setcycle, but itdoes it for us so it worsk clientside	
+	//	SetEntProp(this.index, Prop_Send, "m_bClientSideFrameReset", !GetEntProp(this.index, Prop_Send, "m_bClientSideFrameReset"));	
 		this.ResetSequenceInfo();
 		this.m_iAnimationState = iSequence;
 	//	int layer = this.FindGestureLayerBySequence(iSequence);
@@ -2214,6 +2221,8 @@ methodmap CClotBody < CBaseCombatCharacter
 				this.SetSequence(sequence);
 				this.SetPlaybackRate(1.0);
 				this.SetCycle(0.0);
+			//Its like setcycle, but itdoes it for us so it worsk clientside	
+			//	SetEntProp(this.index, Prop_Send, "m_bClientSideFrameReset", !GetEntProp(this.index, Prop_Send, "m_bClientSideFrameReset"));	
 				this.ResetSequenceInfo();
 			}
 		}
@@ -2477,7 +2486,12 @@ methodmap CClotBody < CBaseCombatCharacter
 	public void SetSequence(int iSequence)	{ SetEntProp(this.index, Prop_Send, "m_nSequence", iSequence); }
 	public float GetPlaybackRate() { return GetEntPropFloat(this.index, Prop_Send, "m_flPlaybackRate"); }
 	public void SetPlaybackRate(float flRate) { SetEntPropFloat(this.index, Prop_Send, "m_flPlaybackRate", flRate); }
-	public void SetCycle(float flCycle)	   { SetEntPropFloat(this.index, Prop_Send, "m_flCycle", flCycle); }
+	public void SetCycle(float flCycle)	   
+	{
+		//We are chacning cycles, we must disable this.
+	//	SetEntProp(this.index, Prop_Send, "m_bClientSideAnimation", 0);
+		SetEntPropFloat(this.index, Prop_Send, "m_flCycle", flCycle); 
+	}
 	/*
 	public void SetSequence(int iSequence)
 	{
@@ -2953,8 +2967,11 @@ methodmap CClotBody < CBaseCombatCharacter
 			TeleportEntity(entity, NULL_VECTOR, NULL_VECTOR, vecForward, true);
 			SetEntityCollisionGroup(entity, 24); //our savior
 			Set_Projectile_Collision(entity); //If red, set to 27
-			
-			g_DHookRocketExplode.HookEntity(Hook_Pre, entity, Rocket_Particle_DHook_RocketExplodePre); //*yawn*
+
+			if(h_NpcSolidHookType[entity] != 0)
+				DHookRemoveHookID(h_NpcSolidHookType[entity]);
+			h_NpcSolidHookType[entity] = 0;
+			h_NpcSolidHookType[entity] = g_DHookRocketExplode.HookEntity(Hook_Pre, entity, Rocket_Particle_DHook_RocketExplodePre); //*yawn*
 		//	SDKHook(entity, SDKHook_ShouldCollide, Never_ShouldCollide);
 			SDKHook(entity, SDKHook_StartTouch, Rocket_Particle_StartTouch);
 			return entity;
@@ -3089,7 +3106,12 @@ methodmap CClotBody < CBaseCombatCharacter
 			TeleportEntity(entity, NULL_VECTOR, NULL_VECTOR, vecForward);
 			SetEntityCollisionGroup(entity, 24); //our savior
 			Set_Projectile_Collision(entity); //If red, set to 27
-			g_DHookRocketExplode.HookEntity(Hook_Pre, entity, Rocket_Particle_DHook_RocketExplodePre); //im lazy so ill reuse stuff that already works *yawn*
+
+			if(h_NpcSolidHookType[entity] != 0)
+				DHookRemoveHookID(h_NpcSolidHookType[entity]);
+			h_NpcSolidHookType[entity] = 0;
+
+			h_NpcSolidHookType[entity] = g_DHookRocketExplode.HookEntity(Hook_Pre, entity, Rocket_Particle_DHook_RocketExplodePre); //im lazy so ill reuse stuff that already works *yawn*
 			SDKHook(entity, SDKHook_ShouldCollide, Never_ShouldCollide);
 			SDKHook(entity, SDKHook_StartTouch, ArrowStartTouch);
 		}
@@ -3124,6 +3146,7 @@ methodmap CClotBody < CBaseCombatCharacter
 		this.SetSequence(nSequence);
 		this.SetPlaybackRate(1.0);
 		this.SetCycle(0.0);
+	//	SetEntProp(this.index, Prop_Send, "m_bClientSideFrameReset", !GetEntProp(this.index, Prop_Send, "m_bClientSideFrameReset"));	
 	
 		this.ResetSequenceInfo();
 		
@@ -3436,6 +3459,8 @@ public void NPC_Base_InitGamedata()
 
 	g_hGetSolidMask			= DHookCreateEx(gamedata, "IBody::GetSolidMask",	   HookType_Raw, ReturnType_Int,   ThisPointer_Address, IBody_GetSolidMask);
 
+
+//	g_iResolveOffset = gamedata.GetOffset("CBaseBoss::m_bResolvePlayerCollisions");
 	delete gamedata;
 
 	NextBotActionFactory ActionFactory = new NextBotActionFactory("ZRMainAction");
@@ -4225,7 +4250,7 @@ public MRESReturn CBaseAnimating_HandleAnimEvent(int pThis, Handle hParams)
 	}
 	else
 	{
-		if(!b_thisNpcIsARaid[pThis] && EnemyNpcAlive >= 20) //Theres too many npcs, kill off the sounds.
+		if(!b_thisNpcIsARaid[pThis] && (EnemyNpcAlive >= 20 || EnableSilentMode)) //Theres too many npcs, kill off the sounds.
 		{
 			switch(npc.m_iNpcStepVariation)
 			{
@@ -4236,17 +4261,13 @@ public MRESReturn CBaseAnimating_HandleAnimEvent(int pThis, Handle hParams)
 				default:
 				{
 					//Remove this entire logic if theres no hooked handle event!
-					
-					if(h_NpcHandleEventHook[pThis] != 0)
-					{
-						DHookRemoveHookID(h_NpcHandleEventHook[pThis]);
-					}
-					h_NpcHandleEventHook[pThis] = 0;
+					b_KillHookHandleEvent[pThis] = true;
+					//dont delete hook INSIDE hook
 				}
 			}
 		}
 	}
-	if(!b_thisNpcIsARaid[pThis] && EnemyNpcAlive >= 20)
+	if(!b_thisNpcIsARaid[pThis] && (EnemyNpcAlive >= 20 || EnableSilentMode))
 	{
 		//kill off sound.
 		//even if they had an anim event
@@ -6175,6 +6196,16 @@ public void NpcBaseThink(int iNPC)
 		SDKUnhook(iNPC, SDKHook_Think, NpcBaseThink);
 		return;
 	}
+	
+	if(b_KillHookHandleEvent[iNPC])
+	{
+		if(h_NpcHandleEventHook[iNPC] != 0)
+		{
+			DHookRemoveHookID(h_NpcHandleEventHook[iNPC]);
+		}
+		h_NpcHandleEventHook[iNPC] = 0;
+		b_KillHookHandleEvent[iNPC] = false;
+	}
 #if defined ZR
 	AprilFoolsModelHideWearables(iNPC);
 #endif
@@ -7088,26 +7119,38 @@ int Place_Gib(const char[] model, float pos[3],float ang[3] = {0.0,0.0,0.0}, flo
 		{
 			if(BleedType == 0)
 			{
-				int particle = ParticleEffectAt(pos, "blood_trail_red_01_goop", Random_time); //This is a permanent particle, gotta delete it manually...
-				SetParent(prop, particle);
+				if(!EnableSilentMode)
+				{
+					int particle = ParticleEffectAt(pos, "blood_trail_red_01_goop", Random_time); //This is a permanent particle, gotta delete it manually...
+					SetParent(prop, particle);
+				}
 				SetEntityRenderColor(prop, 255, 0, 0, 255);
 			}
 			else if(BleedType == 2)
 			{
-				int particle = ParticleEffectAt(pos, "flamethrower_rainbow_bubbles02", Random_time); //This is a permanent particle, gotta delete it manually...
-				SetParent(prop, particle);
+				if(!EnableSilentMode)
+				{
+					int particle = ParticleEffectAt(pos, "flamethrower_rainbow_bubbles02", Random_time); //This is a permanent particle, gotta delete it manually...
+					SetParent(prop, particle);
+				}
 				SetEntityRenderColor(prop, 65, 65, 255, 255);				
 			}
 			else if(BleedType == 3)
 			{
-				int particle = ParticleEffectAt(pos, "doublejump_trail_alt", Random_time); //This is a permanent particle, gotta delete it manually...
-				SetParent(prop, particle);
+				if(!EnableSilentMode)
+				{
+					int particle = ParticleEffectAt(pos, "doublejump_trail_alt", Random_time); //This is a permanent particle, gotta delete it manually...
+					SetParent(prop, particle);
+				}
 				SetEntityRenderColor(prop, 200, 0, 200, 255);
 			}
 			else
 			{
-				int particle = ParticleEffectAt(pos, "blood_impact_green_01", Random_time); //This is a permanent particle, gotta delete it manually...
-				SetParent(prop, particle);
+				if(!EnableSilentMode)
+				{
+					int particle = ParticleEffectAt(pos, "blood_impact_green_01", Random_time); //This is a permanent particle, gotta delete it manually...
+					SetParent(prop, particle);
+				}
 				SetEntityRenderColor(prop, 0, 255, 0, 255);
 			}
 		}
@@ -7159,7 +7202,7 @@ void GibCollidePlayerInteraction(int gib, int player)
 							}
 							HealEntityGlobal(player, player, Heal_Amount_calc, 1.0, 1.0, _);
 							int sound = GetRandomInt(0, sizeof(g_GibEating) - 1);
-							EmitSoundToAll(g_GibEating[sound], player, SNDCHAN_AUTO, 80, _, 1.0, _, _);
+							EmitSoundToClient(player, g_GibEating[sound], player, SNDCHAN_AUTO, 80, _, 1.0, _, _);
 							RemoveEntity(gib);
 							CurrentGibCount -= 1;
 						}
@@ -8692,6 +8735,7 @@ public void SetDefaultValuesToZeroNPC(int entity)
 	RPGCore_ResetHurtList(entity);
 	TrueStrength_Reset(_,entity);
 #endif
+	b_KillHookHandleEvent[entity] = false;
 	f_NpcAdjustFriction[entity] = 1.0;
 	f_AprilFoolsSetStuff[entity] = 0.0;
 	b_HideHealth[entity] = false;
@@ -10176,7 +10220,7 @@ bool BulletAndMeleeTrace_MultiNpcTrace(int entity, int contentsMask, int iExclud
 	{
 		return false;
 	}
-	bool type = BulletAndMeleeTracePlayerAndBaseBossOnly(entity, 0, iExclude);
+	bool type = BulletAndMeleeTrace(entity, 0, iExclude);
 	if(!type) //if it collised, return.
 	{
 		return false;

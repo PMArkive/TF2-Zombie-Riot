@@ -1127,8 +1127,11 @@ enum struct Ruina_Projectiles
 			TeleportEntity(entity, NULL_VECTOR, NULL_VECTOR, Velocity, true);
 			SetEntityCollisionGroup(entity, 24); //our savior
 			Set_Projectile_Collision(entity); //If red, set to 27
-			
-			g_DHookRocketExplode.HookEntity(Hook_Pre, entity, Ruina_RocketExplodePre);
+
+			if(h_NpcSolidHookType[entity] != 0)
+				DHookRemoveHookID(h_NpcSolidHookType[entity]);
+			h_NpcSolidHookType[entity] = 0;
+			h_NpcSolidHookType[entity] = g_DHookRocketExplode.HookEntity(Hook_Pre, entity, Ruina_RocketExplodePre);
 		//	SDKHook(entity, SDKHook_ShouldCollide, Never_ShouldCollide);
 			SDKHook(entity, SDKHook_StartTouch, Ruina_Projectile_Touch);
 
@@ -2756,8 +2759,9 @@ static void BeamEffects(float startPoint[3], float endPoint[3], int color[4], fl
 	TE_SendToAll(0.0);
 	TE_SetupBeamPoints(startPoint, endPoint, g_Ruina_BEAM_Laser, 0, 0, 0, 0.11, ClampBeamWidth(diameter * 0.5 * 1.28), ClampBeamWidth(diameter * 0.5 * 1.28), 0, 1.0, colorLayer2, 3);
 	TE_SendToAll(0.0);
-	TE_SetupBeamPoints(startPoint, endPoint, g_Ruina_BEAM_Laser, 0, 0, 0, 0.11, ClampBeamWidth(diameter * 0.8 * 1.28), ClampBeamWidth(diameter * 0.8 * 1.28), 0, 1.0, colorLayer3, 3);
-	TE_SendToAll(0.0);
+//	TE_SetupBeamPoints(startPoint, endPoint, g_Ruina_BEAM_Laser, 0, 0, 0, 0.11, ClampBeamWidth(diameter * 0.8 * 1.28), ClampBeamWidth(diameter * 0.8 * 1.28), 0, 1.0, colorLayer3, 3);
+//	TE_SendToAll(0.0);
+// I have removed one TE as its way too many te's at once.
 	TE_SetupBeamPoints(startPoint, endPoint, g_Ruina_BEAM_Laser, 0, 0, 0, 0.11, ClampBeamWidth(diameter * 1.28), ClampBeamWidth(diameter * 1.28), 0, 1.0, colorLayer4, 3);
 	TE_SendToAll(0.0);
 	int glowColor[4];

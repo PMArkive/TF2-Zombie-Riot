@@ -2850,7 +2850,7 @@ int CountPlayersOnRed(int alive = 0, bool saved = false)
 #if defined ZR
 
 //alot is  borrowed from CountPlayersOnRed
-float ZRStocks_PlayerScalingDynamic(float rebels = 0.5, bool IgnoreMulti = false)
+float ZRStocks_PlayerScalingDynamic(float rebels = 0.5, bool IgnoreMulti = false, bool IgnoreLevelLimit = false)
 {
 	//dont be 0
 	float ScaleReturn = 0.01;
@@ -2858,7 +2858,7 @@ float ZRStocks_PlayerScalingDynamic(float rebels = 0.5, bool IgnoreMulti = false
 	{
 		if(!b_IsPlayerABot[client] && b_HasBeenHereSinceStartOfWave[client] && IsClientInGame(client) && GetClientTeam(client)==2 && TeutonType[client] != TEUTON_WAITING)
 		{
-			if(Database_IsCached(client) && Level[client] <= 30)
+			if(!IgnoreLevelLimit && Database_IsCached(client) && Level[client] <= 30)
 			{
 				float CurrentLevel = float(Level[client]);
 				CurrentLevel += 30.0;
@@ -3483,7 +3483,7 @@ int Trail_Attach(int entity, char[] trail, int alpha, float lifetime=1.0, float 
 		GetAbsOrigin(entity, f_origin);
 		TeleportEntity(entIndex, f_origin, NULL_VECTOR, NULL_VECTOR);
 		SetVariantString(strTargetName);
-		SetParent(entity, entIndex, "FadeTrail", _, false);
+		SetParent(entity, entIndex, "", _, false);
 		return entIndex;
 	}	
 	return -1;
@@ -5569,7 +5569,7 @@ stock void GetMapName(char[] buffer, int size)
 	GetMapDisplayName(buffer, buffer, size);
 }
 
-int GetEntityFromHandle(any handle)
+stock int GetEntityFromHandle(any handle)
 {
 	int ent = handle & 0xFFF;
 	if (ent == 0xFFF)
@@ -5578,10 +5578,42 @@ int GetEntityFromHandle(any handle)
 	return ent;
 }
 
-int GetEntityFromAddress(Address entity)
+stock int GetEntityFromAddress(Address entity)
 {
 	if (entity == Address_Null)
 		return -1;
 
 	return GetEntityFromHandle(LoadFromAddress(entity + view_as<Address>(FindDataMapInfo(0, "m_angRotation") + 12), NumberType_Int32));
+}
+
+stock void RunScriptCode(int entity, int activator, int caller, const char[] format, any...)
+{
+    if (!IsValidEntity(entity))
+        return;
+    
+    static char buffer[1024];
+    VFormat(buffer, sizeof(buffer), format, 5);
+    
+    SetVariantString(buffer);
+    AcceptEntityInput(entity, "RunScriptCode", activator, caller);
+}
+
+
+stock void Projectile_TeleportAndClip(int entity)
+{
+	float VecPos[3];
+	GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", VecPos);
+
+	//todo: instead of angle, get speed of said projectile, and caclulate the angle from said speed
+	//This is just a placeholder
+	float VecAng[3];
+	GetEntPropVector(entity, Prop_Data, "m_angRotation", VecAng);
+	Handle hTrace = TR_TraceRayFilterEx(VecPos, VecAng, ( MASK_SOLID | CONTENTS_SOLID ), RayType_Infinite, BulletAndMeleeTrace, entity);
+	if ( TR_GetFraction(hTrace) < 1.0)
+	{
+		//collision
+		TR_GetEndPosition(VecPos, hTrace);
+		SDKCall_SetAbsOrigin(entity, VecPos);
+	}
+	delete hTrace;
 }

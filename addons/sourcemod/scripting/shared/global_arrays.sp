@@ -119,6 +119,7 @@ Handle g_hSetLocalOrigin;
 Handle g_hSetLocalAngles;
 Handle g_hSnapEyeAngles;
 Handle g_hSetAbsVelocity;
+ArrayList RecentSoundList[MAXTF2PLAYERS];
 
 float f_PlayerLastKeyDetected[MAXTF2PLAYERS];
 float f_BotDelayShow[MAXTF2PLAYERS];
@@ -413,7 +414,6 @@ int i_EntityRenderColour3[MAXENTITIES]={255, ...};
 int i_EntityRenderColour4[MAXENTITIES]={255, ...};
 bool i_EntityRenderOverride[MAXENTITIES]={false, ...};
 
-bool b_RocketBoomEffect[MAXENTITIES]={false, ...};
 //6 wearables
 int i_Wearable[MAXENTITIES][9];
 int i_FreezeWearable[MAXENTITIES];
@@ -542,8 +542,8 @@ float Mana_Hud_Delay[MAXTF2PLAYERS];
 int i_WandIdNumber[MAXENTITIES]; //This is to see what wand is even used. so it does its own logic and so on.
 
 
-int played_headshotsound_already_Case [MAXTF2PLAYERS];
-int played_headshotsound_already_Pitch [MAXTF2PLAYERS];
+//int played_headshotsound_already_Case [MAXTF2PLAYERS];
+//int played_headshotsound_already_Pitch [MAXTF2PLAYERS];
 int g_particleMissText;
 float f_SemiAutoStats_FireRate[MAXENTITIES];
 int i_SemiAutoStats_MaxAmmo[MAXENTITIES];
@@ -558,7 +558,7 @@ int i_HighTeslarStaff[MAXENTITIES]={0, ...}; 				//3000
 int i_NoBonusRange[MAXENTITIES]={0, ...}; 				//410
 int i_BuffBannerPassively[MAXENTITIES]={0, ...}; 				//786
 bool b_BackstabLaugh[MAXENTITIES];
-float played_headshotsound_already [MAXTF2PLAYERS];
+//float played_headshotsound_already [MAXTF2PLAYERS];
 int i_IsAloneWeapon[MAXENTITIES];
 bool i_InternalMeleeTrace[MAXENTITIES]; 
 int i_StickyAccessoryLogicItem[MAXTF2PLAYERS]; //Item for stickies like "no bounce"
@@ -611,6 +611,7 @@ int i_ExplosiveProjectileHexArray[MAXENTITIES];
 int h_NpcCollissionHookType[MAXENTITIES];
 int h_NpcSolidHookType[MAXENTITIES];
 int h_NpcHandleEventHook[MAXENTITIES];
+bool b_KillHookHandleEvent[MAXENTITIES];
 #define EP_GENERIC				  		0		  					// Nothing special.
 #define EP_NO_KNOCKBACK			  		(1 << 0)   					// No knockback
 #define EP_DEALS_UNUSED_1			  	(1 << 1)   				// Slash Damage (For no npc scaling, or ignoring resistances.)

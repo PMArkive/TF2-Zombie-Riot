@@ -357,7 +357,7 @@ void Construction_SetupVote(KeyValues kv)
 
 			if(kv.GotoFirstSubKey())
 			{
-				for(int i = 1; i < count; i++)
+				for(int i; i < count; i++)
 				{
 					kv.GotoNextKey();
 				}
@@ -643,11 +643,7 @@ static Action Timer_StartAttackWave(Handle timer)
 	if(CurrentAttacks > MaxAttacks)
 	{
 		// Final Boss
-		ArrayList list = RiskList.Get(RiskList.Length - 1);
-		list.GetArray(GetURandomInt() % list.Length, attack);
-		bonusRisk = CurrentRisk - HighestRisk;
-		if(bonusRisk < 0)
-			bonusRisk = 0;
+		bonusRisk = GetRiskAttackInfo(RiskList.Length - 1, attack, true);
 	}
 	else
 	{
@@ -774,11 +770,10 @@ void Construction_BattleVictory()
 
 	if(type > 1)
 	{
-		
 		int cash = 500;
 		int GetRound = Construction_GetRisk() + 3;
 		cash *= GetRound;
-		CPrintToChatAll("{green}%t","Cash Gained!", cash);
+		CPrintToChatAll("%t", "Gained Material", cash, "Cash");
 		CurrentCash += cash;
 		//Extra money.
 		ReviveAll();
@@ -803,15 +798,17 @@ void Construction_BattleVictory()
 				//Failed to spawn, retry. go go!
 			}
 		}
-		if(Amountspawned > 0)
+		/*if(Amountspawned > 0)
 		{
 			CPrintToChatAll("%t","Gifts Spawned", Amountspawned);
 		}
 		else
 		{
 			CPrintToChatAll("%t","No Gifts Spawn");
-		}
+		}*/
 	}
+
+	CPrintToChatAll("%t", "Battle Finished");
 	
 	Waves_RoundEnd();
 	bool victory = true;
@@ -1566,12 +1563,12 @@ void Construction_OpenResearch(int client)
 		if(InResearchAt > gameTime)
 		{
 			FormatEx(buffer, sizeof(buffer), "%t", "Claim Research Time", RoundToCeil(InResearchAt - gameTime));
-			menu.AddItem(NULL_STRING, buffer, ITEMDRAW_DISABLED);
+			menu.AddItem("-1", buffer, ITEMDRAW_DISABLED);
 		}
 		else
 		{
 			FormatEx(buffer, sizeof(buffer), "%t", "Claim Research");
-			menu.AddItem(NULL_STRING, buffer);
+			menu.AddItem("-1", buffer);
 		}
 	}
 
@@ -1612,6 +1609,8 @@ static int ResearchMenuH(Menu menu, MenuAction action, int client, int choice)
 				menu.GetItem(choice, buffer, sizeof(buffer));
 
 				int a = StringToInt(buffer);
+				if(a < 0)
+					return 0;
 
 				ResearchList.GetArray(a, info);
 
@@ -1677,25 +1676,22 @@ static int ResearchMenuH(Menu menu, MenuAction action, int client, int choice)
 
 float Construction_GetMaxHealthMulti()
 {
-	float multi = 5.0;	// Construction Novice
+	float multi = 1.5;	// Construction Novice
+	multi *= 1.65;	// Construction Apprentice
 
 	if(Construction_HasNamedResearch("Base Level I"))
 	{
-		multi *= 3.1;	// Construction Apprentice
-		multi *= 1.15;	// Engineering Repair Handling book
+		multi *= 1.65;	// Construction Worker
 	}
 
 	if(Construction_HasNamedResearch("Base Level II"))
 	{
-		multi *= 1.4;	// Construction Worker
-		multi *= 1.15;	// Alien Repair Handling book
-		multi *= 2.25;	// Construction Expert
+		multi *= 1.7;	// Construction Expert
 	}
 
 	if(Construction_HasNamedResearch("Base Level III"))
 	{
-		multi *= 1.15;	// Cosmic Repair Handling book
-		multi *= 2.6;	// Construction Master
+		multi *= 1.4;	// Construction Master
 	}
 
 	if(Construction_HasNamedResearch("Base Level IV"))

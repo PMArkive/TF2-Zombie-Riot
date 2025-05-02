@@ -18,7 +18,7 @@ public void Construction_Stalker_Collect()
 	Spawns_GetNextPos(pos, ang, "spawn_2_3");
 	NPC_CreateByName("npc_stalker_combine", 0, pos, ang, TFTeam_Blue);
 
-	Spawns_GetNextPos(pos, ang, "spawn_3_3");
+	Spawns_GetNextPos(pos, ang, "spawn_3_4");
 	NPC_CreateByName("npc_stalker_goggles", 0, pos, ang, TFTeam_Blue);
 
 	Construction_AddMaterial("wizuh", 50, true);
@@ -123,6 +123,12 @@ public void Construction_HA_Ally(int entity, StringMap map)
 public void Construction_S_Ally(int entity, StringMap map)
 {
 	MultiSpeed(entity, map, 1.01);
+}
+
+public void FlagShipCalling(int entity, StringMap map)
+{
+	MultiSpeed(entity, map, 1.1);
+	ApplyStatusEffect(entity, entity, "Ziberian Flagship Weaponry", 9999999.9);
 }
 
 // Speed++ Health-
@@ -361,19 +367,19 @@ public void GiveCash_Base1()
 {
 	CurrentCash += 500;
 	GlobalExtraCash += 500;
-	CPrintToChatAll("{green}%t","Cash Gained!", 500);
+	CPrintToChatAll("%t", "Gained Material", 500, "Cash");
 }
 public void GiveCash_Base2()
 {
 	CurrentCash += 1500;
 	GlobalExtraCash += 1500;
-	CPrintToChatAll("{green}%t","Cash Gained!", 1500);
+	CPrintToChatAll("%t", "Gained Material", 1500, "Cash");
 }
 public void GiveCash_Base3()
 {
 	CurrentCash += 3000;
 	GlobalExtraCash += 3000;
-	CPrintToChatAll("{green}%t","Cash Gained!", 3000);
+	CPrintToChatAll("%t", "Gained Material", 3000, "Cash");
 }
 static void SpawnRebel(const char[] data = "")
 {
@@ -423,23 +429,23 @@ public void Construction_RareWeapon_Collect()
 	char name[64];
 	float discount = 0.7;
 
-	switch(GetURandomInt() % 7)
+	switch(GetURandomInt() % 6)
 	{
 		case 0, 1:
 		{
 			strcopy(name, sizeof(name), "Vows of the Sea");
 			discount = 0.5;
 		}
-		case 2:
-		{
-			strcopy(name, sizeof(name), "Infinity Blade");
-			discount = 0.5;
-		}
-		case 3, 4:
+	//	case 2:
+	//	{
+	//		strcopy(name, sizeof(name), "Infinity Blade");
+	//		discount = 0.5;
+	//	}
+		case 2, 3:
 		{
 			strcopy(name, sizeof(name), "Whistle Stop");
 		}
-		case 5, 6:
+		case 4, 5:
 		{
 			strcopy(name, sizeof(name), "Ancestor Launcher");
 		}

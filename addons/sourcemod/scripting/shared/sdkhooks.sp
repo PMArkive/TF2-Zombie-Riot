@@ -22,7 +22,6 @@ bool Client_Had_ArmorDebuff[MAXTF2PLAYERS];
 #if defined ZR
 int Armor_WearableModelIndex;
 int Wing_WearlbeIndex;
-
 #endif
 
 bool ClientPassAliveCheck[MAXTF2PLAYERS];
@@ -63,8 +62,16 @@ void SDKHook_PluginStart()
 	SyncHud_ArmorCounter = CreateHudSynchronizer();
 #endif
 	
+#if defined ZR
+	for(int client = 1; client < sizeof(RecentSoundList); client++)
+	{
+		RecentSoundList[client] = new ArrayList(ByteCountToCells(PLATFORM_MAX_PATH));
+	}
+#endif
+
 #if !defined NOG
 	AddNormalSoundHook(SDKHook_NormalSHook);
+	AddAmbientSoundHook(SDKHook_AmbientSoundHook);
 #endif
 }
 void SDKHook_MapStart()
@@ -1280,6 +1287,13 @@ public void OnPostThink(int client)
 					green = 77;
 					blue = 43;
 				}
+				//plasma
+				case 5:
+				{
+					red = 235;
+					green = 75;
+					blue = 215;
+				}
 				//seaborn
 				default:
 				{
@@ -2286,6 +2300,37 @@ void Replicate_Damage_Medications(int victim, float &damage, int damagetype)
 }
 #endif	// ZR & RPG
 
+#if defined ZR
+Action Timer_RecentSoundRemove(Handle timer, int client)
+{
+	RecentSoundList[client].Erase(0);
+	return Plugin_Continue;
+}
+#endif
+public Action SDKHook_AmbientSoundHook(char sample[PLATFORM_MAX_PATH], int &entity,float &volume, int &level, int &pitch, float pos[3], int &flags, float &delay)
+{
+	if(StrContains(sample, "pipe_bomb", true) != -1)
+	{
+		if(EnableSilentMode)
+		{
+			volume *= 0.8;
+			level = level - 5;
+			//Explosions are too loud, silence them.
+		}
+		return Plugin_Changed;
+	}
+	if(StrContains(sample, "explode", true) != -1)
+	{
+		if(EnableSilentMode)
+		{
+			volume *= 0.8;
+			level = level - 5;
+			//Explosions are too loud, silence them.
+		}
+		return Plugin_Changed;
+	}
+	return Plugin_Continue;
+}
 public Action SDKHook_NormalSHook(int clients[MAXPLAYERS], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags, char soundEntry[PLATFORM_MAX_PATH], int &seed)
 {
 	/*
@@ -2315,6 +2360,22 @@ public Action SDKHook_NormalSHook(int clients[MAXPLAYERS], int &numClients, char
 	}
 	*/
 
+#if defined ZR
+/*
+	if(EnableSilentMode && entity > MaxClients && entity < MAXENTITIES && !b_NpcHasDied[entity] && !(flags & SND_STOP))
+	{
+		if(!b_thisNpcIsARaid[entity])
+		{
+			if(RecentSoundList[0].FindString(sample) != -1)
+				return Plugin_Handled;
+			
+			RecentSoundList[0].PushString(sample);
+			CreateTimer(0.1, Timer_RecentSoundRemove, 0);
+		}
+	}
+*/
+#endif
+
 	if(StrContains(sample, "#mvm/mvm_player_died.wav", true) != -1)
 	{
 		return Plugin_Handled;
@@ -2331,25 +2392,25 @@ public Action SDKHook_NormalSHook(int clients[MAXPLAYERS], int &numClients, char
 	{
 		return Plugin_Handled;
 	}
-	/*
-	if(StrContains(sample, "sentry_", true) != -1)
-	{
-		volume *= 0.4;
-		level = SNDLEVEL_NORMAL;
-		
-		if(StrContains(sample, "sentry_spot", true) != -1)
-			volume *= 0.35;
-			
-		return Plugin_Changed;
-	}
-	*/
 	if(StrContains(sample, "weapons/quake_explosion_remastered.wav", true) != -1)
 	{
 		volume *= 0.8;
 		level = 80;
+		if(EnableSilentMode)
+		{
+			volume *= 0.6;
+			level = 70;
+		}
 
 		//Very loud. 
 		//need to reduce.
+		return Plugin_Changed;
+	}
+	else if(EnableSilentMode && StrContains(sample, "explode", true) != -1)
+	{
+		volume *= 0.6;
+		level = level - 5;
+		//Explosions are too loud, silence them.
 		return Plugin_Changed;
 	}
 
@@ -2430,6 +2491,12 @@ public Action SDKHook_NormalSHook(int clients[MAXPLAYERS], int &numClients, char
 			{
 				ChangedSound = true;
 				level = RoundToNearest(float(level) * f_WeaponVolumeSetRange[entity]);	
+			}
+			if(EnableSilentMode)
+			{
+				ChangedSound = true;
+				volume *= 0.4;
+				level = RoundToNearest(float(level) * 0.85);	
 			}
 			if(ChangedSound)
 				return Plugin_Changed;
