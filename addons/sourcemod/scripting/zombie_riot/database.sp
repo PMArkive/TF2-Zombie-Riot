@@ -606,21 +606,33 @@ public void Database_OnLoadout(Database db, DataPack pack, int numQueries, DBRes
 // Returns the average level of the joining group
 stock int Database_GetMapLevel()
 {
-	if(!Global)
+	Database db = Global;
+	if(!db)
 	{
-		PrintToServer("Database_GetMapLevel::Database Not Connected");
-		return 9999;
+		char error[256];
+		db = SQL_Connect("zr_global", false, error, sizeof(error));
+		//PrintToServer("Database_GetMapLevel::Database Not Connected");
+		//return 9999;
+
+		if(!db)
+		{
+			PrintToServer("Database_GetMapLevel::%s", error);
+			return 9999;
+		}
 	}
 
 	char query[256];
 	FormatEx(query, sizeof(query), "SELECT AVG(xp) FROM " ... DATATABLE_MISC ... " WHERE steamid IN (");
 
+	int connected;
 	int found;
 	for(int client = 1; client <= MaxClients; client++)
 	{
 		if(IsClientConnected(client) && !IsFakeClient(client))
 		{
-			int id = GetSteamAccountID(client);
+			connected++;
+
+			int id = GetSteamAccountID(client, false);
 			if(id)
 			{
 				Format(query, sizeof(query), "%s%s%d", query, found ? "," : "", id);
@@ -629,19 +641,22 @@ stock int Database_GetMapLevel()
 		}
 	}
 
-	PrintToServer("Database_GetMapLevel::Found %d players with accountid", found);
+	PrintToServer("Database_GetMapLevel::Found %d players with accountid (%d connected)", found, connected);
 
 	if(!found)
 		return 9999;
 	
 	Format(query, sizeof(query), "%s);", query);
 
-	SQL_LockDatabase(Global);
-	DBResultSet result = SQL_Query(Global, query);
-	SQL_UnlockDatabase(Global);
+	SQL_LockDatabase(db);
+	DBResultSet result = SQL_Query(db, query);
+	SQL_UnlockDatabase(db);
 
 	if(!result)
 	{
+		if(db != Global)
+			delete db;
+		
 		PrintToServer("Database_GetMapLevel::Query failed");
 		return 9999;
 	}
@@ -649,6 +664,9 @@ stock int Database_GetMapLevel()
 	int xp = result.FetchInt(0);
 	delete result;
 
+	if(db != Global)
+		delete db;
+	
 	PrintToServer("Database_GetMapLevel::Avg XP %d::Avg Lvl %d", xp, XpToLevel(xp));
 
 	return XpToLevel(xp);
