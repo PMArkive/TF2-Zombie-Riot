@@ -603,6 +603,57 @@ public void Database_OnLoadout(Database db, DataPack pack, int numQueries, DBRes
 	delete pack;
 }
 
+// Returns the average level of the joining group
+stock int Database_GetMapLevel()
+{
+	if(!Global)
+	{
+		PrintToServer("Database_GetMapLevel::Database Not Connected");
+		return 9999;
+	}
+
+	char query[256];
+	FormatEx(query, sizeof(query), "SELECT AVG(xp) FROM " ... DATATABLE_MISC ... " WHERE steamid IN (");
+
+	int found;
+	for(int client = 1; client <= MaxClients; client++)
+	{
+		if(IsClientConnected(client) && !IsFakeClient(client))
+		{
+			int id = GetSteamAccountID(client);
+			if(id)
+			{
+				Format(query, sizeof(query), "%s%s%d", query, found ? "," : "", id);
+				found++;
+			}
+		}
+	}
+
+	PrintToServer("Database_GetMapLevel::Found %d players with accountid", found);
+
+	if(!found)
+		return 9999;
+	
+	Format(query, sizeof(query), "%s);", query);
+
+	SQL_LockDatabase(Global);
+	DBResultSet result = SQL_Query(Global, query);
+	SQL_UnlockDatabase(Global);
+
+	if(!result)
+	{
+		PrintToServer("Database_GetMapLevel::Query failed");
+		return 9999;
+	}
+
+	int xp = result.FetchInt(0);
+	delete result;
+
+	PrintToServer("Database_GetMapLevel::Avg XP %d::Avg Lvl %d", xp, XpToLevel(xp));
+
+	return XpToLevel(xp);
+}
+
 /*
 	Local Database
 */

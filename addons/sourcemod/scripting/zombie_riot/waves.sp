@@ -111,6 +111,7 @@ static bool InSetup;
 static int FakeMaxWaves;
 static int WaveLevel;
 static int MapSeed;
+static int MapLevel = -1;
 
 static Function ModFuncRemove = INVALID_FUNCTION;
 static Function ModFuncAlly = INVALID_FUNCTION;
@@ -211,6 +212,7 @@ void Waves_MapStart()
 	FirstMapRound = true;
 	MinibossScalingHandle = 1.0;
 	MapSeed = GetURandomInt();
+	MapLevel = -1;
 //	Freeplay_w500reached = false;
 
 	int objective = GetObjectiveResource();
@@ -627,18 +629,28 @@ void Waves_SetupVote(KeyValues map)
 	bool autoSelect = CvarAutoSelectWave.BoolValue;	
 	Voting = new ArrayList(sizeof(Vote));
 	
+	if(autoSelect && MapLevel == -1)
+		MapLevel = Database_GetMapLevel();
+	
 	Vote vote;
 	if(kv.GotoFirstSubKey())
 	{
 		do
 		{
+			vote.Level = kv.GetNum("level");
+
+			if(autoSelect && vote.Level < MapLevel && Voting.Length)
+			{
+				// Average server level too low
+				continue;
+			}
+
 			kv.GetSectionName(vote.Name, sizeof(vote.Name));
 			kv.GetString("file", vote.Config, sizeof(vote.Config));
 			kv.GetString("desc", vote.Desc, sizeof(vote.Desc));
 			kv.GetString("unlock", vote.Unlock1, sizeof(vote.Unlock1));
 			kv.GetString("unlock2", vote.Unlock2, sizeof(vote.Unlock2));
 			kv.GetString("unlockdesc", vote.Append, sizeof(vote.Append));
-			vote.Level = kv.GetNum("level");
 			Voting.PushArray(vote);
 
 			// If we're downloading via downloadstable, add every vote option to that
